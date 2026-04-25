@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0f0f0f" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>💰 Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --surface3: #282828;
+  --border: #2a2a2a;
+  --border2: #333;
+  --text: #f0ede8;
+  --text2: #888;
+  --text3: #555;
+  --accent: #f0c040;
+  --accent2: #e8a800;
+  --accent-bg: rgba(240,192,64,0.08);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.08);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.08);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.08);
+  --r: 12px;
+  --r-sm: 8px;
+  --r-lg: 16px;
+  --font: 'Instrument Sans', sans-serif;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --tab-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ── LAYOUT ── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+}
+.topbar-logo {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+.topbar-logo span { color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-month {
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--surface2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+}
+.notif-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 16px;
+}
+.notif-badge {
+  position: absolute; top: -2px; right: -2px;
+  width: 16px; height: 16px;
+  background: var(--red);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  border: 2px solid var(--surface);
+}
+
+/* ── SCROLL CONTENT ── */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 calc(var(--tab-height) + var(--safe-bottom) + 12px);
+}
+.section { display: none; padding: 14px 14px 0; }
+.section.active { display: block; }
+
+/* ── BOTTOM TABS ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  height: calc(var(--tab-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  z-index: 200;
+  flex-shrink: 0;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all .15s;
+  padding: 8px 4px;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.tab-item.active { color: var(--accent); }
+.tab-item:not(.active) { color: var(--text3); }
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-label { font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.tab-item.active .tab-icon { transform: translateY(-2px); }
+.tab-dot {
+  width: 4px; height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── METRICS GRID ── */
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px;
+}
+.metric.wide { grid-column: span 2; display: flex; align-items: center; justify-content: space-between; }
+.metric-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; font-weight: 600; }
+.metric-value { font-family: var(--font-mono); font-size: 20px; font-weight: 600; line-height: 1; }
+.metric.wide .metric-value { font-size: 24px; }
+.metric-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+.metric-icon { font-size: 28px; opacity: .6; }
+
+/* ── COLORS ── */
+.green { color: var(--green); }
+.red { color: var(--red); }
+.amber { color: var(--accent); }
+.accent { color: var(--accent); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 14px; }
+.page-header h2 { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--text); }
+.page-header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 10px; }
+.form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+input, select, textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+input[type="date"] { color-scheme: dark; }
+input[type="number"] { font-family: var(--font-mono); }
+.form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 16px;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.btn.primary:active { background: var(--accent2); }
+.btn.danger { color: var(--red); border-color: rgba(248,113,113,0.25); }
+.btn.danger:active { background: var(--red-bg); }
+.btn.full { width: 100%; }
+.btn.sm { padding: 7px 12px; font-size: 12px; }
+.btn.icon-btn { width: 34px; height: 34px; padding: 0; border-radius: var(--r-sm); flex-shrink: 0; }
+
+/* ── EXPENSE ITEMS ── */
+.expense-list { list-style: none; }
+.expense-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.expense-item:last-child { border-bottom: none; }
+.exp-left { flex: 1; min-width: 0; }
+.exp-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.exp-meta { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--font-mono); }
+.exp-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.exp-amount { font-size: 15px; font-weight: 700; font-family: var(--font-mono); }
+
+/* ── TAGS ── */
+.tag {
+  display: inline-block; padding: 2px 7px;
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.tag.sip { background: var(--green-bg); color: var(--green); }
+.tag.rent { background: var(--blue-bg); color: var(--blue); }
+.tag.daily { background: var(--accent-bg); color: var(--accent); }
+.tag.other { background: var(--purple-bg); color: var(--purple); }
+.tag.custom { background: var(--surface3); color: var(--text2); }
+
+/* ── ALERTS ── */
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--r);
+  font-size: 13px;
+  margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
+  border: 1px solid transparent;
+  line-height: 1.5;
+}
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert.success { background: var(--green-bg); border-color: rgba(52,211,153,.2); }
+.alert.success .alert-icon::after { content: '✓'; color: var(--green); }
+.alert.danger { background: var(--red-bg); border-color: rgba(248,113,113,.2); color: var(--text); }
+.alert.danger .alert-icon::after { content: '⚠'; color: var(--red); }
+.alert.warn { background: var(--accent-bg); border-color: rgba(240,192,64,.2); }
+.alert.warn .alert-icon::after { content: '💡'; }
+.alert.info { background: var(--blue-bg); border-color: rgba(96,165,250,.2); }
+.alert.info .alert-icon::after { content: 'ℹ'; color: var(--blue); }
+.alert strong { font-weight: 700; }
+
+/* ── PROGRESS ── */
+.progress-wrap { margin: 8px 0 4px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+.progress-bar { height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ── SUMMARY ROWS ── */
+.summary-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--text2);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-row.total { padding-top: 12px; font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* ── NOTIFICATION OVERLAY ── */
+.notif-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 500;
+  display: none;
+  align-items: flex-end;
+}
+.notif-overlay.open { display: flex; }
+.notif-panel {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 0 0 calc(20px + var(--safe-bottom));
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.notif-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--surface);
+}
+.notif-header h3 { font-family: var(--font-head); font-size: 16px; font-weight: 800; }
+.notif-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 12px;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.notif-dot.danger { background: var(--red); }
+.notif-dot.success { background: var(--green); }
+.notif-dot.info { background: var(--blue); }
+.notif-dot.warn { background: var(--accent); }
+.notif-text { font-size: 13px; color: var(--text); }
+.notif-time { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--font-mono); }
+
+/* ── TOAST ── */
+.toast-container {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 70px);
+  left: 12px; right: 12px;
+  z-index: 1000;
+  display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  animation: toastIn .3s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.toast.removing { animation: toastOut .3s ease forwards; }
+@keyframes toastIn { from { opacity:0; transform:translateY(-10px) scale(.95); } to { opacity:1; transform:none; } }
+@keyframes toastOut { to { opacity:0; transform:translateY(-10px) scale(.95); } }
+.toast-icon { font-size: 18px; flex-shrink: 0; }
+
+/* ── G/R ITEMS ── */
+.gr-item {
+  display: flex; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.gr-item:last-child { border-bottom: none; }
+.gr-check { width: 20px; height: 20px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
+
+/* ── FIXED COST ITEM ── */
+.fc-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.fc-item:last-child { border-bottom: none; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 24px 16px; color: var(--text3); font-size: 13px; }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ── SECTION TOGGLES (for compact mobile sections) ── */
+.section-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; padding: 2px 0;
+  user-select: none;
+}
+.section-toggle .chevron { transition: transform .2s; font-size: 12px; color: var(--text3); }
+.section-toggle.collapsed .chevron { transform: rotate(-90deg); }
+.collapsible { overflow: hidden; transition: max-height .3s ease; }
+
+/* ── NOTIFICATION PERMISSION BANNER ── */
+.perm-banner {
+  background: var(--accent-bg);
+  border: 1px solid rgba(240,192,64,.25);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px;
+}
+.perm-banner .perm-text { flex: 1; }
+.perm-banner .perm-text strong { color: var(--accent); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── DESKTOP SIDEBAR (only on large screens) ── */
+@media (min-width: 768px) {
+  body { overflow: auto; position: relative; }
+  .app-shell { flex-direction: row; }
+  .sidebar-desktop {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    padding: 0 0 1rem;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .sidebar-logo h1 { font-family: var(--font-head); font-size: 16px; font-weight: 800; color: var(--accent); }
+  .sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--font-mono); }
+  .nav-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; padding: 12px 16px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); border-left-color: var(--accent); }
+  .nav-icon-d { font-size: 15px; }
+  .content-wrapper { margin-left: 220px; flex: 1; min-height: 100vh; }
+  .topbar { position: sticky; top: 0; z-index: 50; }
+  .bottom-nav { display: none; }
+  .content-area { padding-bottom: 24px; overflow: visible; height: auto; }
+  .sidebar-desktop { display: flex; }
+  html, body { height: auto; overflow: auto; }
+}
+@media (max-width: 767px) {
+  .sidebar-desktop { display: none; }
+  .content-wrapper { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- DESKTOP SIDEBAR -->
+  <nav class="sidebar-desktop" id="desktop-sidebar">
+    <div class="sidebar-logo">
+      <h1>💰 Expense</h1>
+      <p id="sidebar-month-d"></p>
+    </div>
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="switchTab('dashboard',this,true)" data-tab="dashboard"><span class="nav-icon-d">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="switchTab('add',this,true)" data-tab="add"><span class="nav-icon-d">➕</span> Add Expense</div>
+    <div class="nav-label">Setup</div>
+    <div class="nav-item" onclick="switchTab('budget',this,true)" data-tab="budget"><span class="nav-icon-d">🎯</span> Budget</div>
+    <div class="nav-item" onclick="switchTab('fixed',this,true)" data-tab="fixed"><span class="nav-icon-d">📌</span> Fixed Costs</div>
+    <div class="nav-item" onclick="switchTab('records',this,true)" data-tab="records"><span class="nav-icon-d">🤝</span> Give / Receive</div>
+    <div class="nav-label">Reports</div>
+    <div class="nav-item" onclick="switchTab('analysis',this,true)" data-tab="analysis"><span class="nav-icon-d">🔍</span> Analysis</div>
+  </nav>
+
+  <div class="content-wrapper">
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-logo">💰 <span>Expense</span></div>
+      <div class="topbar-right">
+        <div class="topbar-month" id="topbar-month"></div>
+        <div class="notif-btn" onclick="openNotifPanel()" id="notif-btn">
+          🔔
+          <div class="notif-badge" id="notif-badge" style="display:none">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCROLL CONTENT -->
+    <div class="content-area" id="content-area">
+
+      <!-- DASHBOARD -->
+      <div class="section active" id="sec-dashboard">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p id="dash-subtitle">Overview</p>
+        </div>
+        <div id="notif-permission-banner"></div>
+        <div id="balance-alert"></div>
+        <div class="metrics" id="metric-grid"></div>
+        <div class="card">
+          <div class="card-title">Monthly Breakdown</div>
+          <div id="breakdown-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Category Spending</div>
+          <div id="category-breakdown"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Expenses <span id="recent-count" style="font-size:11px;font-weight:400;color:var(--text3)"></span></div>
+          <ul class="expense-list" id="recent-list"></ul>
+        </div>
+      </div>
+
+      <!-- ADD EXPENSE -->
+      <div class="section" id="sec-add">
+        <div class="page-header">
+          <h2>Add Expense</h2>
+          <p>Log where your money goes</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Daily Budget Status</div>
+          <div id="daily-status"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">New Expense</div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="exp-name" placeholder="e.g. Groceries, Petrol..." autocomplete="off" />
+          </div>
+          <div class="form-row2">
+            <div class="form-group">
+              <label>Amount (₹)</label>
+              <input type="number" id="exp-amount" placeholder="0" min="0" inputmode="numeric" />
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="exp-date" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="exp-cat" onchange="toggleCustomCat()">
+              <option value="daily">Daily expense</option>
+              <option value="sip">SIP / Investment</option>
+              <option value="rent">Rent</option>
+              <option value="other">Other fixed</option>
+              <option value="custom">Custom category</option>
+            </select>
+          </div>
+          <div id="custom-cat-row" style="display:none">
+            <div class="form-group">
+              <label>Category name</label>
+              <input type="text" id="custom-cat-name" placeholder="e.g. Entertainment, Medical..." />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Note (optional)</label>
+            <input type="text" id="exp-note" placeholder="Any detail..." />
+          </div>
+          <button class="btn primary full" onclick="addExpense()">➕ Add Expense</button>
+        </div>
+        <div class="card">
+          <div class="card-title">This Month's Expenses</div>
+          <ul class="expense-list" id="all-expenses-list"></ul>
+        </div>
+      </div>
+
+      <!-- BUDGET SETUP -->
+      <div class="section" id="sec-budget">
+        <div class="page-header">
+          <h2>Budget Setup</h2>
+          <p>Configure income and targets</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Income & Allocations</div>
+          <div class="form-group">
+            <label>Monthly Income (₹)</label>
+            <input type="number" id="b-income" placeholder="e.g. 60000" inputmode="numeric" oninput="saveBudget()" />
+          </div>
+          <div class="form-group">
+            <label>SIP / Investment (₹/month)</label>
+            <input type="number" id="b-sip" placeholder="e.g. 5000" inputmode="numeric" oninput="saveBudget()" />
+          </div>
+          <div class="form-group">
+            <label>Rent (₹/month)</label>
+            <input type="number" id="b-rent" placeholder="e.g. 12000" inputmode="numeric" oninput="saveBudget()" />
+          </div>
+          <div class="form-group">
+            <label>Daily Expense Budget (₹/day)</label>
+            <input type="number" id="b-daily" placeholder="e.g. 500" inputmode="numeric" oninput="saveBudget()" />
+          </div>
+          <div class="form-group">
+            <label>Minimum Balance Target (₹)</label>
+            <input type="number" id="b-min" placeholder="e.g. 5000" inputmode="numeric" oninput="saveBudget()" />
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Live Budget Preview</div>
+          <div id="budget-preview"></div>
+        </div>
+      </div>
+
+      <!-- FIXED COSTS -->
+      <div class="section" id="sec-fixed">
+        <div class="page-header">
+          <h2>Fixed Costs</h2>
+          <p>Monthly recurring commitments</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Add Fixed Cost</div>
+          <div class="form-row2">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="fc-name" placeholder="e.g. EMI, Netflix..." />
+            </div>
+            <div class="form-group">
+              <label>Amount (₹/mo)</label>
+              <input type="number" id="fc-amount" placeholder="0" inputmode="numeric" />
+            </div>
+          </div>
+          <button class="btn primary full" onclick="addFixedCost()">Add Fixed Cost</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Your Fixed Costs</div>
+          <ul class="expense-list" id="fixed-cost-list"></ul>
+          <div class="divider"></div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-weight:700;font-size:15px">
+            <span>Total</span><span class="accent" id="fc-total">₹0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GIVE / RECEIVE -->
+      <div class="section" id="sec-records">
+        <div class="page-header">
+          <h2>Give / Receive</h2>
+          <p>Track money you owe or are owed</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Add Entry</div>
+          <div class="form-group">
+            <label>Person / Description</label>
+            <input type="text" id="gr-name" placeholder="e.g. Lend to Rahul for trip..." />
+          </div>
+          <div class="form-row2">
+            <div class="form-group">
+              <label>Amount (₹)</label>
+              <input type="number" id="gr-amount" placeholder="0" inputmode="numeric" />
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="gr-type">
+                <option value="give">I will give</option>
+                <option value="receive">I will receive</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn primary full" onclick="addGR()">Add Entry</button>
+        </div>
+        <div class="card">
+          <div class="card-title">I Will Give <span id="gr-give-total" class="red" style="font-family:var(--font-mono);font-weight:700">₹0</span></div>
+          <ul class="expense-list" id="gr-give-list"></ul>
+        </div>
+        <div class="card">
+          <div class="card-title">I Will Receive <span id="gr-receive-total" class="green" style="font-family:var(--font-mono);font-weight:700">₹0</span></div>
+          <ul class="expense-list" id="gr-receive-list"></ul>
+        </div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="section" id="sec-analysis">
+        <div class="page-header">
+          <h2>Analysis</h2>
+          <p>Spending insights & recovery plan</p>
+        </div>
+        <div class="card" id="analysis-summary"></div>
+        <div class="card" id="analysis-forecast"></div>
+        <div class="card" id="missing-expense-section" style="display:none">
+          <div class="card-title" style="color:var(--red)">⚠ Balance Gap</div>
+          <div id="missing-amount" style="font-size:18px;font-weight:700;color:var(--red);margin-bottom:10px;font-family:var(--font-mono)"></div>
+          <ul class="expense-list" id="gap-records-list"></ul>
+          <div class="form-group" style="margin-top:12px">
+            <label>Where did it go?</label>
+            <input type="text" id="gap-name" placeholder="Cash withdrawal, shopping..." />
+          </div>
+          <div class="form-row2">
+            <div class="form-group">
+              <input type="number" id="gap-amount" placeholder="₹ Amount" inputmode="numeric" />
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end">
+              <button class="btn primary full" onclick="addGapRecord()">Record</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="recovery-plan" style="display:none">
+          <div class="card-title">💡 Recovery Plan</div>
+          <div id="recovery-content"></div>
+        </div>
+      </div>
+
+    </div><!-- end content-area -->
+  </div><!-- end content-wrapper -->
+</div><!-- end app-shell -->
+
+<!-- BOTTOM TABS (mobile) -->
+<nav class="bottom-nav" id="bottom-nav">
+  <div class="tab-item active" onclick="switchTab('dashboard',this)" data-tab="dashboard">
+    <div class="tab-icon">📊</div>
+    <div class="tab-label">Home</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('add',this)" data-tab="add">
+    <div class="tab-icon">➕</div>
+    <div class="tab-label">Add</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('budget',this)" data-tab="budget">
+    <div class="tab-icon">🎯</div>
+    <div class="tab-label">Budget</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('fixed',this)" data-tab="fixed">
+    <div class="tab-icon">📌</div>
+    <div class="tab-label">Fixed</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('records',this)" data-tab="records">
+    <div class="tab-icon">🤝</div>
+    <div class="tab-label">G/R</div>
+  </div>
+  <div class="tab-item" onclick="switchTab('analysis',this)" data-tab="analysis">
+    <div class="tab-icon">🔍</div>
+    <div class="tab-label">Analysis</div>
+  </div>
+</nav>
+
+<!-- NOTIFICATION PANEL OVERLAY -->
+<div class="notif-overlay" id="notif-overlay" onclick="closeNotifPanel(event)">
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-header">
+      <h3>🔔 Alerts</h3>
+      <button class="btn sm" onclick="clearNotifs()">Clear all</button>
+    </div>
+    <div id="notif-panel-list"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── STATE ──
+let state = {
+  income: 0, sipAmt: 0, rentAmt: 0, dailyBudget: 0, minBalance: 0,
+  expenses: [], fixedCosts: [], grItems: [], gapRecords: [], notifications: [],
+  notifPermission: 'default', unread: 0
+};
+
+// ── STORAGE ──
+function loadState() {
+  try {
+    const s = localStorage.getItem('exptrackerV4');
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e) {}
+  loadBudgetInputs();
+  renderAll();
+  updateTopbarDate();
+}
+
+function saveState() {
+  try { localStorage.setItem('exptrackerV4', JSON.stringify(state)); } catch(e) {}
+}
+
+// ── DATE HELPERS ──
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const monthStr = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth()+1).toString().padStart(2,'0'); };
+const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const daysInMonth = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); };
+const daysPassed = () => new Date().getDate();
+const daysLeft = () => daysInMonth() - daysPassed();
+const fmt = n => '₹' + Math.abs(Math.round(n)).toLocaleString('en-IN');
+
+function updateTopbarDate() {
+  const d = new Date();
+  const label = mNames[d.getMonth()] + ' ' + d.getFullYear();
+  document.getElementById('topbar-month').textContent = label;
+  const s = document.getElementById('sidebar-month-d');
+  if (s) s.textContent = label;
+  document.getElementById('dash-subtitle').textContent = label + ' — overview';
+}
+
+// ── CATEGORIES ──
+const catLabel = c => ({ sip:'SIP', rent:'Rent', daily:'Daily', other:'Other' }[c] || c);
+const catClass = c => ({ sip:'sip', rent:'rent', daily:'daily', other:'other' }[c] || 'custom');
+
+// ── BUDGET ──
+function saveBudget() {
+  state.income = parseFloat(document.getElementById('b-income').value) || 0;
+  state.sipAmt = parseFloat(document.getElementById('b-sip').value) || 0;
+  state.rentAmt = parseFloat(document.getElementById('b-rent').value) || 0;
+  state.dailyBudget = parseFloat(document.getElementById('b-daily').value) || 0;
+  state.minBalance = parseFloat(document.getElementById('b-min').value) || 0;
+  saveState(); renderAll();
+}
+
+function loadBudgetInputs() {
+  document.getElementById('b-income').value = state.income || '';
+  document.getElementById('b-sip').value = state.sipAmt || '';
+  document.getElementById('b-rent').value = state.rentAmt || '';
+  document.getElementById('b-daily').value = state.dailyBudget || '';
+  document.getElementById('b-min').value = state.minBalance || '';
+}
+
+// ── STATS ──
+function calcStats() {
+  const me = getMonthExpenses();
+  const bycat = cat => me.filter(e => e.cat === cat).reduce((a, e) => a + e.amount, 0);
+  const sipSpent = bycat('sip');
+  const rentSpent = bycat('rent');
+  const dailySpent = bycat('daily');
+  const otherSpent = me.filter(e => !['sip','rent','daily'].includes(e.cat)).reduce((a,e)=>a+e.amount,0);
+  const fcTotal = (state.fixedCosts||[]).reduce((a,f)=>a+f.amount,0);
+  const totalSpent = sipSpent + rentSpent + dailySpent + otherSpent;
+  const inHandNow = state.income - totalSpent;
+  const projectedDailyTotal = (daysPassed() > 0 ? dailySpent/daysPassed() : 0) * daysInMonth();
+  const expectedEndBalance = state.income - state.sipAmt - state.rentAmt - fcTotal - (state.dailyBudget * daysInMonth());
+  const dailyAvg = daysPassed() > 0 ? dailySpent / daysPassed() : 0;
+  return { sipSpent, rentSpent, dailySpent, otherSpent, fcTotal, totalSpent, inHandNow, expectedEndBalance, dailyAvg, me, projectedDailyTotal };
+}
+
+function getMonthExpenses() {
+  return (state.expenses||[]).filter(e => e.date && e.date.startsWith(monthStr()));
+}
+
+// ── ADD EXPENSE ──
+document.getElementById('exp-date').value = todayStr();
+
+function toggleCustomCat() {
+  document.getElementById('custom-cat-row').style.display =
+    document.getElementById('exp-cat').value === 'custom' ? 'block' : 'none';
+}
+
+function addExpense() {
+  const name = document.getElementById('exp-name').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
+  const cat = document.getElementById('exp-cat').value;
+  const date = document.getElementById('exp-date').value || todayStr();
+  const note = document.getElementById('exp-note').value.trim();
+  const customCat = document.getElementById('custom-cat-name').value.trim();
+  if (!name || !amount) { showToast('⚠', 'Enter description & amount', 'warn'); return; }
+  const finalCat = (cat === 'custom' && customCat) ? customCat : cat;
+  state.expenses.unshift({ id: Date.now(), name, amount, cat: finalCat, date, note });
+  showToast('✅', `${name} — ${fmt(amount)} added`, 'success');
+  addNotif(`Added: ${name} — ${fmt(amount)} (${catLabel(finalCat)})`, 'info');
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-note').value = '';
+  saveState();
+  checkBudgetAlerts();
+  renderAll();
+}
+
+function deleteExp(id) {
+  state.expenses = state.expenses.filter(e => e.id !== id);
+  saveState(); renderAll();
+}
+
+// ── FIXED COSTS ──
+function addFixedCost() {
+  const name = document.getElementById('fc-name').value.trim();
+  const amount = parseFloat(document.getElementById('fc-amount').value) || 0;
+  if (!name || !amount) { showToast('⚠', 'Enter name and amount', 'warn'); return; }
+  state.fixedCosts.push({ id: Date.now(), name, amount });
+  document.getElementById('fc-name').value = '';
+  document.getElementById('fc-amount').value = '';
+  addNotif(`Fixed cost added: ${name} — ${fmt(amount)}/month`, 'info');
+  showToast('📌', `${name} added as fixed cost`, 'success');
+  saveState(); renderAll();
+}
+
+function deleteFC(id) { state.fixedCosts = state.fixedCosts.filter(f=>f.id!==id); saveState(); renderAll(); }
+
+// ── GIVE/RECEIVE ──
+function addGR() {
+  const name = document.getElementById('gr-name').value.trim();
+  const amount = parseFloat(document.getElementById('gr-amount').value) || 0;
+  const type = document.getElementById('gr-type').value;
+  if (!name || !amount) { showToast('⚠', 'Enter description and amount', 'warn'); return; }
+  state.grItems.push({ id: Date.now(), name, amount, type, done: false, date: todayStr() });
+  document.getElementById('gr-name').value = '';
+  document.getElementById('gr-amount').value = '';
+  saveState(); renderAll();
+}
+
+function toggleGR(id) {
+  const item = state.grItems.find(g=>g.id===id);
+  if (item) item.done = !item.done;
+  saveState(); renderAll();
+}
+
+function deleteGR(id) { state.grItems = state.grItems.filter(g=>g.id!==id); saveState(); renderAll(); }
+
+// ── GAP RECORDS ──
+function addGapRecord() {
+  const name = document.getElementById('gap-name').value.trim();
+  const amount = parseFloat(document.getElementById('gap-amount').value) || 0;
+  if (!name || !amount) { showToast('⚠', 'Enter description and amount', 'warn'); return; }
+  state.gapRecords.push({ id: Date.now(), name, amount, date: todayStr() });
+  document.getElementById('gap-name').value = '';
+  document.getElementById('gap-amount').value = '';
+  saveState(); renderAll();
+}
+
+function deleteGapRecord(id) { state.gapRecords = state.gapRecords.filter(r=>r.id!==id); saveState(); renderAll(); }
+
+// ── NOTIFICATIONS ──
+function addNotif(text, type) {
+  state.notifications.unshift({ id: Date.now(), text, type, time: new Date().toLocaleString('en-IN') });
+  if (state.notifications.length > 100) state.notifications = state.notifications.slice(0, 100);
+  state.unread = (state.unread || 0) + 1;
+  updateNotifBadge();
+}
+
+function clearNotifs() {
+  state.notifications = [];
+  state.unread = 0;
+  updateNotifBadge();
+  saveState();
+  renderNotifPanel();
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (state.unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = state.unread > 9 ? '9+' : state.unread;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openNotifPanel() {
+  state.unread = 0;
+  updateNotifBadge();
+  saveState();
+  renderNotifPanel();
+  document.getElementById('notif-overlay').classList.add('open');
+}
+
+function closeNotifPanel(e) {
+  if (e.target === document.getElementById('notif-overlay')) {
+    document.getElementById('notif-overlay').classList.remove('open');
+  }
+}
+
+function renderNotifPanel() {
+  const notifs = state.notifications || [];
+  document.getElementById('notif-panel-list').innerHTML = notifs.length ?
+    notifs.map(n => `
+      <div class="notif-item">
+        <div class="notif-dot ${n.type||'info'}"></div>
+        <div>
+          <div class="notif-text">${n.text}</div>
+          <div class="notif-time">${n.time}</div>
+        </div>
+      </div>`).join('') :
+    '<div class="empty"><div class="empty-icon">🔔</div>No alerts yet</div>';
+}
+
+// ── PUSH NOTIFICATIONS ──
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  const perm = await Notification.requestPermission();
+  state.notifPermission = perm;
+  saveState();
+  renderPermBanner();
+  if (perm === 'granted') showToast('🔔', 'Push notifications enabled!', 'success');
+}
+
+function sendPushNotif(title, body) {
+  if (Notification.permission === 'granted') {
+    try {
+      new Notification(title, { body, icon: '💰', badge: '💰', tag: 'expense-tracker' });
+    } catch(e) {}
+  }
+}
+
+function renderPermBanner() {
+  const el = document.getElementById('notif-permission-banner');
+  if (!('Notification' in window) || Notification.permission === 'granted') {
+    el.innerHTML = ''; return;
+  }
+  if (Notification.permission === 'denied') {
+    el.innerHTML = `<div class="alert warn"><div class="alert-icon"></div><div>Push notifications are blocked. Enable them in browser settings to get budget alerts.</div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="perm-banner">
+      <div class="perm-text"><strong>Enable alerts</strong> — Get push notifications when you exceed your budget.</div>
+      <button class="btn sm primary" onclick="requestNotifPermission()">Enable</button>
+    </div>`;
+}
+
+// ── BUDGET ALERT CHECKS ──
+function checkBudgetAlerts() {
+  const s = calcStats();
+  const inHand = s.inHandNow;
+  const dp = daysPassed();
+
+  // Balance below minimum
+  if (state.minBalance > 0 && inHand < state.minBalance) {
+    const gap = state.minBalance - inHand;
+    const msg = `Balance ₹${Math.round(inHand).toLocaleString('en-IN')} below minimum! Gap: ₹${Math.round(gap).toLocaleString('en-IN')}`;
+    addNotif('⚠ ' + msg, 'danger');
+    sendPushNotif('⚠ Balance Alert', msg);
+  }
+
+  // Daily budget exceeded
+  if (state.dailyBudget > 0 && s.dailyAvg > state.dailyBudget * 1.1) {
+    const over = s.dailyAvg - state.dailyBudget;
+    const msg = `Daily avg ₹${Math.round(s.dailyAvg).toLocaleString('en-IN')} exceeds budget by ₹${Math.round(over).toLocaleString('en-IN')}/day`;
+    addNotif('📊 ' + msg, 'warn');
+    sendPushNotif('📊 Daily Budget Exceeded', msg);
+  }
+
+  // Monthly total > 80% of income
+  if (state.income > 0 && s.totalSpent > state.income * 0.8) {
+    const pct = Math.round(s.totalSpent / state.income * 100);
+    const msg = `You've spent ${pct}% of your income this month`;
+    addNotif('💸 ' + msg, 'warn');
+    sendPushNotif('💸 High Spending Alert', msg);
+  }
+}
+
+// ── TOAST ──
+const toastQueue = [];
+function showToast(icon, text, type='info') {
+  const ct = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="toast-icon">${icon}</div><div>${text}</div>`;
+  ct.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('removing');
+    setTimeout(() => el.remove(), 300);
+  }, 2500);
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderDashboard();
+  renderAddTab();
+  renderBudgetPreview();
+  renderFixedCosts();
+  renderGRList();
+  renderAnalysis();
+  renderPermBanner();
+  updateNotifBadge();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const s = calcStats();
+  const inHand = s.inHandNow;
+  const belowMin = state.minBalance > 0 && inHand < state.minBalance;
+  const overDaily = state.dailyBudget > 0 && s.dailyAvg > state.dailyBudget;
+
+  document.getElementById('metric-grid').innerHTML = `
+    <div class="metric wide">
+      <div>
+        <div class="metric-label">Balance in hand</div>
+        <div class="metric-value ${belowMin ? 'red' : 'green'}">${fmt(inHand)}</div>
+        <div class="metric-sub">Min: ${fmt(state.minBalance)}</div>
+      </div>
+      <div class="metric-icon">${belowMin ? '⚠️' : '✅'}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Income</div>
+      <div class="metric-value accent">${fmt(state.income)}</div>
+      <div class="metric-sub">Monthly</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total Spent</div>
+      <div class="metric-value red">${fmt(s.totalSpent)}</div>
+      <div class="metric-sub">${state.income > 0 ? Math.round(s.totalSpent/state.income*100) : 0}% used</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Daily Avg</div>
+      <div class="metric-value ${overDaily ? 'red' : 'green'}">${fmt(s.dailyAvg)}</div>
+      <div class="metric-sub">Limit: ${fmt(state.dailyBudget)}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Days Left</div>
+      <div class="metric-value">${daysLeft()}</div>
+      <div class="metric-sub">of ${daysInMonth()}</div>
+    </div>
+  `;
+
+  let alertHtml = '';
+  if (state.income > 0) {
+    if (belowMin) {
+      const gap = state.minBalance - inHand;
+      alertHtml = `<div class="alert danger" style="margin-bottom:12px"><div class="alert-icon"></div><div><strong>Balance below minimum!</strong> You need <strong>${fmt(gap)}</strong> more. Check Analysis for recovery plan.</div></div>`;
+    } else {
+      alertHtml = `<div class="alert success" style="margin-bottom:12px"><div class="alert-icon"></div><div>Balance is healthy — <strong>${fmt(inHand - state.minBalance)}</strong> above minimum target.</div></div>`;
+    }
+    if (overDaily) {
+      alertHtml += `<div class="alert warn" style="margin-bottom:12px"><div class="alert-icon"></div><div><strong>Daily budget exceeded!</strong> You're spending <strong>${fmt(s.dailyAvg - state.dailyBudget)}/day</strong> over your limit.</div></div>`;
+    }
+  }
+  document.getElementById('balance-alert').innerHTML = alertHtml;
+
+  document.getElementById('breakdown-list').innerHTML = [
+    ['Income', fmt(state.income), 'green'],
+    ['− SIP/Investment', fmt(s.sipSpent || state.sipAmt), 'red'],
+    ['− Rent', fmt(s.rentSpent || state.rentAmt), 'red'],
+    ['− Fixed Costs', fmt(s.fcTotal), 'red'],
+    ['− Daily Expenses', fmt(s.dailySpent), 'red'],
+    ['− Other', fmt(s.otherSpent), 'red'],
+    ['= Balance', fmt(inHand), inHand >= state.minBalance ? 'green' : 'red'],
+  ].map((r,i) => `<div class="summary-row ${i===6?'total':''}"><span>${r[0]}</span><span class="${r[2]}" style="font-family:var(--font-mono)">${r[1]}</span></div>`).join('');
+
+  // Category breakdown
+  const cats = {};
+  getMonthExpenses().forEach(e => { cats[e.cat] = (cats[e.cat]||0) + e.amount; });
+  const total = Object.values(cats).reduce((a,v)=>a+v,0)||1;
+  const barColors = { sip:'var(--green)', rent:'var(--blue)', daily:'var(--accent)', other:'var(--purple)' };
+  document.getElementById('category-breakdown').innerHTML = Object.entries(cats).length ?
+    Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => `
+      <div style="margin-bottom:12px">
+        <div class="progress-label">
+          <span class="tag ${catClass(cat)}">${catLabel(cat)}</span>
+          <span style="font-family:var(--font-mono);font-weight:600">${fmt(amt)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${Math.min(100,amt/total*100).toFixed(1)}%;background:${barColors[cat]||'var(--text3)'}"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">${(amt/total*100).toFixed(1)}% of spending</div>
+      </div>`).join('') :
+    '<div class="empty"><div class="empty-icon">📊</div>No expenses yet</div>';
+
+  const recent = (state.expenses||[]).slice(0,6);
+  document.getElementById('recent-count').textContent = `(${state.expenses.length} total)`;
+  document.getElementById('recent-list').innerHTML = recent.length ? recent.map(e => `
+    <li class="expense-item">
+      <div class="exp-left">
+        <div class="exp-name"><span>${e.name}</span> <span class="tag ${catClass(e.cat)}">${catLabel(e.cat)}</span></div>
+        <div class="exp-meta">${e.date}${e.note ? ' · ' + e.note : ''}</div>
+      </div>
+      <div class="exp-right">
+        <span class="exp-amount red">${fmt(e.amount)}</span>
+      </div>
+    </li>`).join('') : '<li class="empty"><div class="empty-icon">🧾</div>No expenses yet</li>';
+}
+
+// ── ADD TAB ──
+function renderAddTab() {
+  const s = calcStats();
+  const dp = daysPassed();
+  const budget = state.dailyBudget * dp;
+  const pct = budget > 0 ? Math.min(110, s.dailySpent / budget * 100) : 0;
+  const remaining = (state.dailyBudget * daysInMonth()) - s.dailySpent;
+  document.getElementById('daily-status').innerHTML = `
+    <div class="summary-row"><span>Daily budget</span><span style="font-family:var(--font-mono)">${fmt(state.dailyBudget)}/day</span></div>
+    <div class="summary-row"><span>Daily avg</span><span class="${s.dailyAvg > state.dailyBudget ? 'red' : 'green'}" style="font-family:var(--font-mono)">${fmt(s.dailyAvg)}/day</span></div>
+    <div class="summary-row"><span>Used (${dp} days)</span><span>${pct.toFixed(0)}%</span></div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%;background:${pct>100?'var(--red)':pct>75?'var(--accent)':'var(--green)'}"></div></div>
+    </div>
+    <div class="summary-row"><span>Remaining this month</span><span class="${remaining < 0 ? 'red' : 'green'}" style="font-family:var(--font-mono);font-weight:700">${fmt(remaining)}</span></div>
+  `;
+
+  const me = getMonthExpenses();
+  document.getElementById('all-expenses-list').innerHTML = me.length ? me.map(e => `
+    <li class="expense-item">
+      <div class="exp-left">
+        <div class="exp-name"><span>${e.name}</span> <span class="tag ${catClass(e.cat)}">${catLabel(e.cat)}</span></div>
+        <div class="exp-meta">${e.date}${e.note ? ' · ' + e.note : ''}</div>
+      </div>
+      <div class="exp-right">
+        <span class="exp-amount red">${fmt(e.amount)}</span>
+        <button class="btn icon-btn danger" onclick="deleteExp(${e.id})">✕</button>
+      </div>
+    </li>`).join('') : '<li class="empty"><div class="empty-icon">🧾</div>No expenses this month</li>';
+}
+
+// ── BUDGET PREVIEW ──
+function renderBudgetPreview() {
+  const s = calcStats();
+  const avail = state.income - state.sipAmt - state.rentAmt - s.fcTotal - state.minBalance;
+  const budgetedDaily = state.dailyBudget * daysInMonth();
+  document.getElementById('budget-preview').innerHTML = `
+    ${[
+      ['Income', fmt(state.income), 'green'],
+      ['− SIP', fmt(state.sipAmt), 'red'],
+      ['− Rent', fmt(state.rentAmt), 'red'],
+      ['− Fixed costs', fmt(s.fcTotal), 'red'],
+      ['− Min reserve', fmt(state.minBalance), 'red'],
+      ['Available for daily', fmt(avail), avail<0?'red':'green'],
+      ['Daily budget total', fmt(budgetedDaily), ''],
+      ['Expected end balance', fmt(s.expectedEndBalance), s.expectedEndBalance>=state.minBalance?'green':'red'],
+    ].map((r,i)=>`<div class="summary-row ${i===7?'total':''}"><span>${r[0]}</span><span class="${r[2]}" style="font-family:var(--font-mono)">${r[1]}</span></div>`).join('')}
+  `;
+}
+
+// ── FIXED COSTS ──
+function renderFixedCosts() {
+  const total = (state.fixedCosts||[]).reduce((a,f)=>a+f.amount,0);
+  const list = document.getElementById('fixed-cost-list');
+  list.innerHTML = (state.fixedCosts||[]).length ?
+    state.fixedCosts.map(f => `
+      <li class="expense-item">
+        <div class="exp-left"><div class="exp-name">${f.name}</div></div>
+        <div class="exp-right">
+          <span class="exp-amount accent">${fmt(f.amount)}<span style="font-size:10px;font-weight:400">/mo</span></span>
+          <button class="btn icon-btn danger" onclick="deleteFC(${f.id})">✕</button>
+        </div>
+      </li>`).join('') :
+    '<li class="empty"><div class="empty-icon">📌</div>No fixed costs yet</li>';
+  document.getElementById('fc-total').textContent = fmt(total);
+}
+
+// ── GIVE/RECEIVE ──
+function renderGRList() {
+  const give = (state.grItems||[]).filter(g=>g.type==='give');
+  const receive = (state.grItems||[]).filter(g=>g.type==='receive');
+  const giveTotal = give.filter(g=>!g.done).reduce((a,g)=>a+g.amount,0);
+  const recTotal = receive.filter(g=>!g.done).reduce((a,g)=>a+g.amount,0);
+
+  const renderList = (items, listId) => {
+    document.getElementById(listId).innerHTML = items.length ? items.map(g=>`
+      <li class="expense-item" style="${g.done?'opacity:.4':''}">
+        <div class="exp-left" style="display:flex;align-items:center;gap:8px;flex-direction:row">
+          <input type="checkbox" class="gr-check" ${g.done?'checked':''} onchange="toggleGR(${g.id})" />
+          <div>
+            <div class="exp-name" style="${g.done?'text-decoration:line-through':''}">${g.name}</div>
+            <div class="exp-meta">${g.date||''}</div>
+          </div>
+        </div>
+        <div class="exp-right">
+          <span class="exp-amount ${g.type==='give'?'red':'green'}">${g.type==='give'?'−':'+'}${fmt(g.amount)}</span>
+          <button class="btn icon-btn danger" onclick="deleteGR(${g.id})">✕</button>
+        </div>
+      </li>`).join('') : '<li class="empty">Nothing here yet</li>';
+  };
+
+  renderList(give, 'gr-give-list');
+  renderList(receive, 'gr-receive-list');
+  document.getElementById('gr-give-total').textContent = fmt(giveTotal);
+  document.getElementById('gr-receive-total').textContent = fmt(recTotal);
+}
+
+// ── ANALYSIS ──
+function renderAnalysis() {
+  const s = calcStats();
+  const inHand = s.inHandNow;
+  const gap = state.minBalance - inHand;
+  const gapRecTotal = (state.gapRecords||[]).reduce((a,r)=>a+r.amount,0);
+  const unexplained = Math.max(0, gap - gapRecTotal);
+  const dl = Math.max(daysLeft(), 1);
+  const projectedBalance = state.income - state.sipAmt - state.rentAmt - s.fcTotal - s.projectedDailyTotal;
+
+  document.getElementById('analysis-summary').innerHTML = `
+    <div class="card-title">Financial Summary</div>
+    ${[
+      ['Income', fmt(state.income), 'green'],
+      ['SIP/Investment', fmt(state.sipAmt), 'red'],
+      ['Rent', fmt(state.rentAmt), 'red'],
+      ['Fixed costs', fmt(s.fcTotal), 'red'],
+      ['Daily budget (month)', fmt(state.dailyBudget * daysInMonth()), ''],
+      ['Actual daily spent', fmt(s.dailySpent), s.dailySpent > state.dailyBudget * daysPassed() ? 'red' : 'green'],
+      ['Other spends', fmt(s.otherSpent), ''],
+      ['Balance now', fmt(inHand), inHand >= state.minBalance ? 'green' : 'red'],
+      ['Min target', fmt(state.minBalance), ''],
+      ['Status', inHand >= state.minBalance ? '✓ On track' : '⚠ Below target', inHand >= state.minBalance ? 'green' : 'red'],
+    ].map(r=>`<div class="summary-row"><span>${r[0]}</span><span class="${r[2]}" style="font-family:var(--font-mono)">${r[1]}</span></div>`).join('')}
+  `;
+
+  document.getElementById('analysis-forecast').innerHTML = `
+    <div class="card-title">End-of-Month Forecast</div>
+    ${[
+      ['Days passed', daysPassed()+''],
+      ['Days remaining', dl+''],
+      ['Daily avg', fmt(s.dailyAvg)+'/day'],
+      ['Projected end balance', fmt(projectedBalance)],
+      ['Expected (if on budget)', fmt(s.expectedEndBalance)],
+      ['Min needed', fmt(state.minBalance)],
+      ['Forecast', projectedBalance >= state.minBalance ? '✓ Good' : '⚠ Shortfall likely'],
+    ].map((r,i)=>`<div class="summary-row ${i===6?'total':''}"><span>${r[0]}</span><span class="${i===6?(projectedBalance>=state.minBalance?'green':'red'):''}" style="font-family:var(--font-mono)">${r[1]}</span></div>`).join('')}
+  `;
+
+  const missSec = document.getElementById('missing-expense-section');
+  const recSec = document.getElementById('recovery-plan');
+  if (gap > 0 && state.income > 0) {
+    missSec.style.display = 'block';
+    document.getElementById('missing-amount').textContent = `Gap: ${fmt(gap)} · Explained: ${fmt(gapRecTotal)} · Unexplained: ${fmt(unexplained)}`;
+    document.getElementById('gap-records-list').innerHTML = (state.gapRecords||[]).length ?
+      state.gapRecords.map(r=>`
+        <li class="expense-item">
+          <div class="exp-left"><div class="exp-name">${r.name}</div><div class="exp-meta">${r.date}</div></div>
+          <div class="exp-right"><span class="exp-amount red">${fmt(r.amount)}</span><button class="btn icon-btn danger" onclick="deleteGapRecord(${r.id})">✕</button></div>
+        </li>`).join('') : '';
+    recSec.style.display = 'block';
+    const cutPerDay = gap / dl;
+    const newTarget = Math.max(0, (state.dailyBudget||0) - cutPerDay);
+    document.getElementById('recovery-content').innerHTML = `
+      <div class="alert warn"><div class="alert-icon"></div><div>To recover <strong>${fmt(gap)}</strong> in <strong>${dl} days</strong>, cut daily spend by <strong>${fmt(cutPerDay)}/day</strong>. New daily target: <strong>${fmt(newTarget)}/day</strong>.</div></div>
+      ${[
+        ['Gap to cover', fmt(gap)],
+        ['Days left', dl+' days'],
+        ['Daily budget', fmt(state.dailyBudget)+'/day'],
+        ['Cut per day', fmt(cutPerDay)+'/day'],
+        ['New daily target', fmt(newTarget)+'/day'],
+      ].map((r,i)=>`<div class="summary-row"><span>${r[0]}</span><span class="${i>=2?'amber':''}" style="font-family:var(--font-mono)">${r[1]}</span></div>`).join('')}
+    `;
+  } else {
+    missSec.style.display = 'none';
+    recSec.style.display = 'none';
+  }
+}
+
+// ── TAB SWITCHING ──
+function switchTab(tab, el, isDesktop) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+
+  // Mobile tabs
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  const mobileTab = document.querySelector(`.tab-item[data-tab="${tab}"]`);
+  if (mobileTab) mobileTab.classList.add('active');
+
+  // Desktop sidebar
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const desktopItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if (desktopItem) desktopItem.classList.add('active');
+
+  // Scroll to top
+  const ca = document.getElementById('content-area');
+  if (ca) ca.scrollTop = 0;
+
+  renderAll();
+}
+
+// ── INIT ──
+loadState();
+</script>
+</body>
+</html>
